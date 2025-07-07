@@ -1,5 +1,18 @@
 # Google Gemini Changelog
 
+## [Add Safety Settings] - 2025-07-03
+
+- 🛡️ Now users can set their safety filtering options as they need.
+- 🐛 Fix a bug in AI chat
+
+## [New Model] - 2025-05-14
+
+- 🆕 New Model: Gemini 2.5 Pro Preview 0506
+
+## [New Model] - 2025-04-25
+
+- 🆕 New Model: Gemini 2.5 Flash Experimental
+
 ## [New Model and Code Improvements] - 2025-03-26
 
 - 🆕 New Model: Gemini 2.5 Pro Experimental

@@ -18,6 +18,7 @@ import {
   setTodoProperty,
   deleteTodo,
   updateTodo,
+  updateProject,
   handleError,
   List as TList,
   TodoParams,
@@ -56,7 +57,11 @@ export default function TodoListItemActions({
 
   async function updateAction(args: TodoParams, successToastOptions: Toast.Options) {
     try {
-      await updateTodo(todo.id, args);
+      if (todo.isProject) {
+        await updateProject(todo.id, args);
+      } else {
+        await updateTodo(todo.id, args);
+      }
       await showToast({
         style: Toast.Style.Success,
         title: successToastOptions.title,
@@ -139,8 +144,11 @@ New title:
     await updateAction({ 'add-tags': tag }, { title: 'Added tag' });
   }
 
-  async function setDeadline(date: Date) {
-    await updateAction({ deadline: date.toISOString() }, { title: 'Set deadline' });
+  async function setDeadline(date: string | null) {
+    const title = date === null ? 'Removed deadline' : 'Set deadline';
+    const deadline = date === null ? '' : date;
+
+    await updateAction({ deadline }, { title });
   }
 
   async function deleteToDo() {
@@ -159,6 +167,24 @@ New title:
       });
       refreshTodos();
     }
+  }
+
+  function formatDateTime(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const datePart = `${year}-${month}-${day}`;
+
+    // If the user picked a full day, we avoid providing the time, as
+    // Things leverages the time part to understand whether a reminder
+    // should be set.
+    if (Action.PickDate.isFullDay(date)) {
+      return datePart;
+    }
+
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${datePart}@${hours}:${minutes}`;
   }
 
   return (
@@ -208,8 +234,14 @@ New title:
             title="Date…"
             icon={Icon.Calendar}
             min={new Date()}
-            onChange={(date) => schedule(date ? date.toISOString() : 'anytime')}
-            type={Action.PickDate.Type.Date}
+            onChange={(date) => {
+              if (!date) {
+                return schedule('anytime');
+              }
+
+              return schedule(formatDateTime(date));
+            }}
+            type={Action.PickDate.Type.DateTime}
           />
           <Action {...listItems.someday} onAction={() => schedule('someday')} />
         </ActionPanel.Submenu>
@@ -247,9 +279,7 @@ New title:
           shortcut={{ modifiers: ['cmd', 'shift'], key: 'd' }}
           min={new Date()}
           onChange={(date) => {
-            if (date) {
-              return setDeadline(date);
-            }
+            return setDeadline(date ? formatDateTime(date) : null);
           }}
           type={Action.PickDate.Type.Date}
         />
